@@ -46,22 +46,31 @@ def mostSimilars(userId, itemId):
     df = pd.read_csv('ratings_Electronics_50.csv', header=None)
     users = pd.Series(df[0])
     userItems = df[ users == userId][1].tolist() #Items that active user rated
+    userRates = df[ users == userId][2] #Ratings of thoes items
     similarList = {}
-    counter = 0
-    for item in userItems:
-        similarList[item] = [cosim(str(item), itemId)]
-        counter += 1
-        #if counter == 5:
-         #   break
-    sortedList = sorted(similarList.items(), key=lambda kv: kv[1])
+    for item, rate in zip(userItems,userRates):
+        similarList[item] = [cosim(str(item), itemId),rate]
+    sortedList = sorted(similarList.items(), key=lambda kv: kv[1][0])
     if len(sortedList) > 10:
         sortedList = sortedList[-10:]
-    return sortedList #output is a list of tuples (itemId, similarity)
+    return sortedList #output is a list of tuples (itemId, [similarity, rateByUser])
+
+def predictRating(userId, itemId):
+    sims = mostSimilars(userId, itemId)
+    soorat = 0
+    makhraj = 0
+    for i in sims:
+        soorat += (i[1][0] * i[1][1])
+        makhraj += i[1][0]
+    result = soorat / abs(makhraj)
+    print(result)
+    return result
     
 
 #cosim('B000L4D42Q','B000N7VPZE')
 #cosim('B000WON6O6', 'B000L4D42Q')
-print(mostSimilars('A12LH2100CKQO', 'B000L4D42Q'))
+#print(mostSimilars('A12LH2100CKQO', 'B000L4D42Q'))
+predictRating('A12LH2100CKQO', 'B000L4D42Q')
 
 
 # USEFUL THINGS:
