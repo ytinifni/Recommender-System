@@ -5,7 +5,7 @@ import pandas as pd
 import time
 
 """
-Read the csv file and return a DataFrame
+    Read the csv file and return a DataFrame
 """
 def readFile():
     df = pd.read_csv("ratings_Electronics_50.csv", header=None)
@@ -13,27 +13,28 @@ def readFile():
     return df
 
 """
-Make the input DataFrame into a User-Item Matrix typeof( dataframe )
-ARGS:
-  df = dataFrame
+    Make the input DataFrame into a User-Item Matrix typeof( dataframe )
+    ARGS:
+      df = dataFrame
 """
 def userItemMatrix(df):
-    #items = self.df[1].drop_duplicates(keep = 'first').values[:10]
-    #users = self.df[0].drop_duplicates(keep = 'first').values[:10]
     df2 = pd.DataFrame({'userId': df[0], 'items': df[1], 'rating': df[2]})
     R_df = df2.pivot(index = 'userId', columns ='items', values = 'rating').fillna(0)
-    #print(self.R_df)
     return R_df
 
-
+"""
+    for each user calculates the mean of his/her ratings
+"""
 def meanUser(df):
     usersMean = {}
     users = df[0].drop_duplicates(keep='first').values
     for u in users:
         usersMean[u] = df[ df[0] == u ][2].mean()
-    #print(usersMean)
     return usersMean
 
+"""
+    make a user-item matrix out of mean of ratings
+"""
 def calcMeanMatrix(usersMean,r_df):
     for user in usersMean:
         r_df.loc[user] -= usersMean[user]
@@ -80,20 +81,23 @@ def cosim(x,y,df):
         norm2 += pow(ry - r_mean,2)
     return ( NUMERATOR  / np.sqrt(norm1) * np.sqrt(norm2) )
 
+"""
+    Calculating adjusted cosine similarity of two items
+"""
 def cosim2(item1, item2):
     numerator = item1.dot(np.transpose(item2))
     norm1 = np.linalg.norm(item1)
     norm2 = np.linalg.norm(item2)
     result = numerator / (norm1*norm2)
-    #print(result)
     return result
 
-def itemSimilarity(r_df,usersRatingsMean ):
+def itemSimilarity(r_df,df,usersRatingsMean ):
     items = df[1].drop_duplicates(keep = 'first').values
     simMatrix = np.zeros((len(items),len(items)))
+    #simMatrix = pd.DataFrame(0, index=items, columns=items)
     for i in range(r_df.shape[1]):
         for j in range(i, r_df.shape[1]):
-            simMatrix[i][j] = cosim2(r_df[items[i]].values,r_df[items[j]].values,)
+            simMatrix[i][j] = cosim2(r_df[items[i]].values,r_df[items[j]].values)
     # for i in range(len(items)):
     #     for j in range(i,len(items)):
     #         print(i)
@@ -101,50 +105,56 @@ def itemSimilarity(r_df,usersRatingsMean ):
     print(simMatrix)
     return simMatrix
 
-def mostSimilar(userId,itemId,df,L):
-    #Items that active user rated (L):
-    userItems = df[ df[0] == userId][1].tolist()
+def arrayToDf(matrix,df):
+    items = df[1].drop_duplicates(keep = 'first').values
+    dfMatrix = pd.DataFrame(data=matrix, index=items, columns=items)
+    return dfMatrix
 
-    # key, values ==> keys are the items which were similar enough
-    #values are the cosine similarity between the two:
+"""
+    calculating the set of items rated by active user (userId)
+    that are most similar to item itemId. (L)
+    Returns a list of tuples [(itemId, rating), ..]
+"""
+def mostSimilar(userId, itemId, iiMatrix, df, L):
+    #Items that active user rated (L):
+    userItems = df[ df[0] == userId ][1].values
+    #iidf = pd.DataFrame(data=iiMatrix,index=df[1].drop_duplicates(keep="first").values)
     similarList = {}
     for item in userItems:
-        tempSim = cosim(str(item),itemId,df)
-        #If similarity is a negative number, we ignore.
+        tempSim = iiMatrix.loc[itemId][item]
+
+        #only half of the matrix is full ( item-item matrix )
+        #So we need to check if we're in the right triangle:
+        if tempSim == 0:
+            tempSim = iiMatrix.loc[item][itemId]
         if tempSim > 0:
             similarList[item] = tempSim
-        else:
-            continue
-
     sortedList = sorted(similarList.items(), key=lambda kv: kv[1], reverse=True)
     if len(sortedList) > L:
         sortedList = sortedList[:L]
     return sortedList
-    #return similarList
 
 #Predict a rate for the itemId which is given
-def predict(userId, itemId, df, r_df):
-    similars = mostSimilar(userId, itemId, df, 10)
+def predict(userId, itemId, df, r_df,iiDF):
+    similars = mostSimilar(userId, itemId, iiDF, df, 10)
     NUMERATOR  = 0
     simsum = 0
     for s in (similars):
         simsum += abs(s[1])
         NUMERATOR  += s[1] * r_df.loc[userId,s[0]]
-    if ( simsum == 0 ):
-        simsum = 1
     return NUMERATOR  / simsum
 
 """
 Returns the top K Item recommended to user
 """
-def predictTopKRecommendations(userId, k, df, r_df):
+def predictTopKRecommendations(userId, k, df, r_df, iiDF):
     #Items that active user rated (L):
     recs = []
     userItems = df[ df[0] == userId][1].tolist()
     items = df[1].drop_duplicates(keep = 'first').values
-    for item in items[:100]:
+    for item in items:
         if( item not in userItems ):
-            recs.append((predict(userId, item, df, r_df),item))
+            recs.append((predict(userId, item, df, r_df, iiDF),item))
         else:
             continue
     #sorting the predicts by their rate
@@ -157,23 +167,33 @@ def predictTopKRecommendations(userId, k, df, r_df):
 
 df = readFile()
 r_df = userItemMatrix(df)
+
 usersRatingsMean = meanUser(df)
-a = calcMeanMatrix(usersRatingsMean,r_df)
+uiMatrix = calcMeanMatrix(usersRatingsMean,r_df)
+
+"""
+Users:
+A12LH2100CKQO
+
+Items:
+B00008A6CC
+B000L4D42Q
+B000WON6O6
+B000HDJT4S *
+
+* : our user did not rate this item
+"""
+
+
+iiMatrix = itemSimilarity(uiMatrix,df, usersRatingsMean)
+iiDF = arrayToDf(iiMatrix,df)
+
+#mostSims = mostSimilar("A12LH2100CKQO","B000HDJT4S",df=df, iiMatrix=iiDF, L=10)
+#pr = predict("A12LH2100CKQO", "B000HDJT4S", df, r_df,iiDF)
 t1 = time.time()
-
-#itemSimilarity(a,usersRatingsMean)
-
-
-#print(predict("A12LH2100CKQO","B00008A6CC",df, r_df)) #7.771 TIME
-#print(cosim('B000WON6O6', 'B000L4D42Q',df)) # 0.06 TIME
-# print(a['B000WON6O6'].values)
-# print(a['B00008A6CC'].values)
-#print(cosim2(a['B000WON6O6'].values, a['B00008A6CC'].values)) # 0.06 TIME
-#print(cosim2(a['B000WON6O6'].values, a['B000L4D42Q'].values)) # 0.06 TIME
-
-#print(mostSimilar("A12LH2100CKQO","B000L4D42Q",df,10))  # 7.606 TIME
-#print(predictTopKRecommendations('A12LH2100CKQO', 10,df, r_df)) # 15 min
-
+pr = predictTopKRecommendations("A12LH2100CKQO", 10, df, r_df, iiDF)
 t2 = time.time()
-print(t2 - t1)
+print(pr)
+
+print("Duration: ",t2 - t1)
 #[(4.999850129100263, 'B000I98ZYG'), (4.999505488331909, 'B008CBQSKU'), (4.998953081172865, 'B0079X1VQS'), (4.997260737706318, 'B002HQUIVQ'), (4.99555894041664, 'B0014YXM9M'), (4.968261050552186, 'B0014L4ZKK'), (4.931845483767931, 'B000067SPL'), (4.9004820177043715, 'B002WE6D44'), (4.9004820177043715, 'B002WE6D44'), (4.892200110256977, 'B0058UUR6E')]
