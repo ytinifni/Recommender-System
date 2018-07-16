@@ -34,14 +34,13 @@ class MF():
     #Read the csv file and return a DataFrame
     def readFile(self):
         self.df = pd.read_csv(self.fileName, header=None)
+        self.users = self.df[0].drop_duplicates(keep='first').values
+        self.items = self.df[1].drop_duplicates(keep='first').values
 
     #Make the input DataFrame into a User-Item Matrix typeof( dataframe )
     def userItemMatrix(self):
-        #items = self.df[1].drop_duplicates(keep = 'first').values[:10]
-        #users = self.df[0].drop_duplicates(keep = 'first').values[:10]
         df2 = pd.DataFrame({'userId': self.df[0], 'items': self.df[1], 'rating': self.df[2]})
         self.R_df = df2.pivot(index = 'userId', columns ='items', values = 'rating').fillna(0)
-        #print(self.R_df)
 
     def train(self):
 
@@ -56,12 +55,12 @@ class MF():
         for i in range(self.iterations):
             self.sgd()
             print("Round ",i)
-            #if (i+1) % 10 == 0:
-            #    print("Iteration: %d ; error = %.4f" % (i+1, mse))
         a = pd.DataFrame(self.alll())
+        a.index = self.users
+        a.columns = self.items
         print(a)
-        a.to_csv('out.csv', sep='\t', encoding='utf-8')
-        self.mse()
+        #a.to_csv('out.csv', sep='\t', encoding='utf-8')
+        #self.mse()
 
 
     #mean square error
