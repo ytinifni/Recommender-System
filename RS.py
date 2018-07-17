@@ -209,9 +209,9 @@ class MF():
             r_prime = self.b_u[i] + self.b_i[j] + self.u[i, :].dot(self.v[j, :].T)
             error = r - r_prime
 
-            self.b_u[i] += self.alpha * (error - self.lambdaa * self.b_u[i])
-            self.b_i[j] += self.alpha * (error - self.lambdaa * self.b_i[j])
-
+            #updating biases and V and U vectors in a same manner
+            self.b_u[i] += self.alpha * ((error * self.b_u[i]) - (self.lambdaa * self.b_i[j]))
+            self.b_i[j] += self.alpha * ((error * self.b_i[j]) - (self.lambdaa * self.b_i[j]))
             self.u[i,:] += self.alpha * ((error * self.v[j,:]) - (self.lambdaa*self.u[i,:]))
             self.v[j,:] += self.alpha * ((error * self.u[i,:]) - (self.lambdaa*self.v[j,:]))
 
