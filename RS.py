@@ -5,6 +5,7 @@ import math
 import pandas as pd
 import operator
 import csv
+import json
 import os.path
 
 
@@ -12,12 +13,24 @@ import os.path
     TASK 2 FUNCTIONS
 """
 
+
 """
     Read the csv file and return a DataFrame
 """
 def readFile(fileName):
     return pd.read_csv(fileName, header=None)
 
+"""
+    Reading the JSON file
+    NOTE:
+        FILE 'meta_Electronics_50_repaired.json' had a format problem
+        was not able to read it. but the method is working fine with
+        a usual json file
+"""
+def readJSON(fileName):
+    with open(fileName) as f:
+        data = json.load(f)
+    return data
 
 """
     Make the input DataFrame into a User-Item Matrix typeof( dataframe )
@@ -217,6 +230,7 @@ class MF():
 
     def alll(self):
         return self.b_u[:,np.newaxis] + self.b_i[np.newaxis:,] + self.u.dot(np.transpose(self.v))
+
 
 
 
