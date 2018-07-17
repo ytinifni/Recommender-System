@@ -409,11 +409,11 @@ def eval_BLRS():
 
 if __name__ == '__main__':
     eval_ARS()
-    print("------------------------------------------------------------------n")
+    print("-----------------------------------------------------------------\n")
     eval_BLRS()
 
     """
-        un-comment the codes below to run just the prediction implementations 
+        un-comment the codes below to run just the prediction implementations
     """
     # Just running ARS prediction:
     #ars = print(randomDF, randomR_df)
