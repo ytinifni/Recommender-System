@@ -5,7 +5,7 @@ import math
 import pandas as pd
 import operator
 import csv
-import time
+import os.path
 
 
 """
@@ -411,7 +411,10 @@ if __name__ == '__main__':
         in order to run the Recommender Systems methods
     """
 
-    #fileName = ''
+    fileName = input('Please enter the file address: ')
+    while (not os.path.isfile(fileName)):
+        print('Wrong file or directory. Please try again.')
+        fileName = input('Please enter the file address: ')
     #df = readFile(fileName)
     #r_df = userItemMatrix(df)
 
