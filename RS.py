@@ -77,10 +77,7 @@ def itemSimilarity(r_df,df,usersRatingsMean ):
     for i in range(r_df.shape[1]):
         for j in range(i, r_df.shape[1]):
             simMatrix[i][j] = cosim(r_df[r_df.columns.values[i]].values,r_df[r_df.columns.values[j]].values)
-    # for i in range(len(items)):
-    #     for j in range(i,len(items)):
-    #         print(i)
-    #         simMatrix[i][j] = cosim2(r_df[items[i]].values,r_df[items[j]].values,)
+
     print(simMatrix)
     return simMatrix
 
@@ -97,7 +94,6 @@ def arrayToDf(matrix,r_df):
 def mostSimilar(userId, itemId, iiMatrix, df, L):
     #Items that active user rated (L):
     userItems = df[ df[0] == userId ][1].values
-    #iidf = pd.DataFrame(data=iiMatrix,index=df[1].drop_duplicates(keep="first").values)
     similarList = {}
     for item in userItems:
         tempSim = iiMatrix.loc[itemId][item]
@@ -218,8 +214,6 @@ class MF():
 
             self.u[i,:] += self.alpha * ((error * self.v[j,:]) - (self.lambdaa*self.u[i,:]))
             self.v[j,:] += self.alpha * ((error * self.u[i,:]) - (self.lambdaa*self.v[j,:]))
-
-
 
     def alll(self):
         return self.b_u[:,np.newaxis] + self.b_i[np.newaxis:,] + self.u.dot(np.transpose(self.v))
@@ -413,10 +407,16 @@ if __name__ == '__main__':
     eval_BLRS()
 
     """
-        un-comment the codes below to run just the prediction implementations
+        un-comment the codes below and give the CSV fileName to the variable
+        in order to run the Recommender Systems methods
     """
+
+    #fileName = ''
+    #df = readFile(fileName)
+    #r_df = userItemMatrix(df)
+
     # Just running ARS prediction:
-    #ars = print(randomDF, randomR_df)
+    #ars = ARS(df, r_df)
 
     #just running BLRS prediciton:
-    #ars = BLRS(randomDF, randomR_df)
+    #blrs = BLRS(df, r_df)
