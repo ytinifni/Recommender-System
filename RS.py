@@ -425,15 +425,17 @@ if __name__ == '__main__':
         in order to run the Recommender Systems methods
     """
 
+    """
     fileName = input('Please enter the file address: ')
     while (not os.path.isfile(fileName)):
         print('Wrong file or directory. Please try again.')
         fileName = input('Please enter the file address: ')
     #df = readFile(fileName)
-    #r_df = userItemMatrix(df)
+    r_df = userItemMatrix(df)
 
     # Just running ARS prediction:
-    #ars = ARS(df, r_df)
+    ars = ARS(df, r_df)
 
     #just running BLRS prediciton:
-    #blrs = BLRS(df, r_df)
+    blrs = BLRS(df, r_df)
+    """
